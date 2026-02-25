@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kamera Geotagging Pro</title>
+    <title>Kamera Geotagging Pro Final</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #222;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #1a1a1a; /* Latar belakang halaman lebih gelap */
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 15px;
+            justify-content: center; /* Menengahkan vertikal */
+            padding: 20px;
             color: white;
             box-sizing: border-box;
             min-height: 100vh;
@@ -24,18 +25,19 @@
         .camera-container {
             position: relative;
             width: 100%;
-            max-width: 800px;
-            border-radius: 10px;
+            max-width: 900px; /* Sedikit lebih lebar */
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            background: #000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            background: transparent; /* PERBAIKAN: Ubah dari #000 jadi transparent agar tidak ada bar hitam */
+            line-height: 0; /* PERBAIKAN: Mencegah celah di bawah gambar */
         }
 
-        video, img {
+        video, img#photoOutput {
             width: 100%;
             height: auto;
             display: block;
-            /* Transisi halus saat kamera berganti cermin/normal */
+            object-fit: contain; /* Memastikan seluruh gambar terlihat */
             transition: transform 0.3s ease; 
         }
 
@@ -43,109 +45,128 @@
             display: none;
         }
 
+        /* --- OVERLAY RAPI --- */
         .overlay {
             position: absolute;
-            bottom: 10px;
-            left: 10px;
-            right: 10px;
-            display: none;
+            bottom: 20px; /* Jarak dari bawah sedikit diperbesar */
+            left: 20px;
+            right: 20px;
+            display: none; /* Flex akan diaktifkan via JS */
             flex-direction: row;
-            gap: 10px;
-            align-items: stretch;
+            gap: 15px;
+            align-items: flex-end; /* Sejajar di bawah */
             z-index: 20;
+            line-height: normal; /* Kembalikan line-height normal untuk teks */
         }
 
         #miniMap {
-            width: 100px;
-            height: 100px;
-            border-radius: 8px;
-            flex-shrink: 0;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            width: 110px;
+            height: 110px;
+            border-radius: 10px;
+            flex-shrink: 0; /* Peta tidak boleh mengecil */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.6);
             z-index: 10;
+            border: 2px solid rgba(255, 255, 255, 0.2);
         }
 
         .details-box {
-            flex-grow: 1;
-            background: rgba(15, 15, 15, 0.75);
-            border-radius: 8px;
-            padding: 10px;
+            flex-grow: 1; /* Mengisi sisa ruang ke kanan */
+            background: rgba(0, 0, 0, 0.75); /* Latar belakang transparan gelap */
+            border-radius: 10px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            backdrop-filter: blur(4px);
-            overflow: hidden;
+            backdrop-filter: blur(6px); /* Efek blur lebih kuat */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            /* PERBAIKAN: overflow: hidden DIHAPUS agar teks tidak terpotong */
         }
 
         .header-text {
-            font-size: 14px;
-            font-weight: bold;
-            margin: 0 0 4px 0;
+            font-size: 18px; /* Font lebih besar */
+            font-weight: 700;
+            margin: 0 0 8px 0;
             color: #ffffff;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            /* PERBAIKAN: Menghapus pemotongan teks header */
+            word-wrap: break-word;
         }
 
         .flag-icon {
-            font-size: 12px;
-            margin: 0 0 4px 0;
+            font-size: 20px;
+            margin: 0 0 8px 0;
         }
 
         .address-text {
-            font-size: 10px;
-            line-height: 1.3;
-            margin: 0 0 6px 0;
-            color: #eaeaea;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 0 0 10px 0;
+            color: #e0e0e0;
+            /* PERBAIKAN: Menghapus pembatasan 2 baris agar alamat muncul penuh */
+            word-wrap: break-word; 
+        }
+
+        .meta-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
 
         .meta-text {
-            font-size: 10px;
-            margin: 2px 0;
-            color: #cccccc;
+            font-size: 12px;
+            margin: 0;
+            color: #b0b0b0;
+            font-family: 'Consolas', 'Courier New', monospace; /* Font monospace untuk koordinat/waktu */
         }
 
+        /* --- KONTROL --- */
         .controls {
-            margin-top: 15px;
+            margin-top: 25px;
             display: flex;
-            gap: 10px;
+            gap: 12px;
             flex-wrap: wrap;
             justify-content: center;
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
         }
 
         button {
-            padding: 10px 15px;
+            padding: 12px 20px;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             background-color: #007bff;
             color: white;
-            font-size: 14px;
+            font-size: 15px;
             cursor: pointer;
-            transition: background 0.3s;
-            font-weight: bold;
+            transition: all 0.2s;
+            font-weight: 600;
             flex-grow: 1;
             max-width: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
-        button:hover { background-color: #0056b3; }
-        #switchCamBtn { background-color: #17a2b8; }
-        #switchCamBtn:hover { background-color: #117a8b; }
-        #uploadBtn { background-color: #6c757d; }
-        #uploadBtn:hover { background-color: #5a6268; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+        button:active { transform: translateY(0); }
+        
+        #switchCamBtn { background-color: #6c757d; }
+        #switchCamBtn:hover { background-color: #5a6268; }
+
+        #captureBtn { background-color: #007bff; }
+        #captureBtn:hover { background-color: #0056b3; }
+
+        #uploadBtn { background-color: #e2e6ea; color: #333; }
+        #uploadBtn:hover { background-color: #d3d9df; }
+        
         #downloadBtn { background-color: #28a745; }
         #downloadBtn:hover { background-color: #218838; }
+        
         #retakeBtn { background-color: #dc3545; }
         #retakeBtn:hover { background-color: #c82333; }
     </style>
 </head>
 <body>
-
-    <h2>GPS Map Camera</h2>
 
     <div class="camera-container" id="cameraContainer">
         <video id="cameraStream" autoplay playsinline></video>
@@ -155,10 +176,12 @@
             <div id="miniMap"></div>
             <div class="details-box">
                 <p class="header-text" id="locationHeader">Mencari lokasi...</p>
-                <div class="flag-icon">🇮🇩</div>
-                <p class="address-text" id="addressText">Memuat alamat detail...</p>
-                <p class="meta-text" id="coordText">Lat ... Long ...</p>
-                <p class="meta-text" id="timeText">Date Time GMT ...</p>
+                <div class="flag-icon">🇮🇩 INDONESIA</div>
+                <p class="address-text" id="addressText">Sedang memuat detail alamat lengkap...</p>
+                <div class="meta-container">
+                     <p class="meta-text" id="coordText">Lat ... Long ...</p>
+                     <p class="meta-text" id="timeText">Date Time GMT ...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -167,15 +190,15 @@
     <input type="file" id="fileInput" accept="image/*" style="display: none;">
 
     <div class="controls">
-        <button id="switchCamBtn">Ganti Kamera</button>
-        <button id="captureBtn">Ambil Foto</button>
-        <button id="uploadBtn">Upload</button>
-        <button id="retakeBtn" style="display:none;">Ulangi</button>
-        <button id="downloadBtn" style="display:none;">Unduh Foto</button>
+        <button id="switchCamBtn" title="Ganti Kamera">🔄 Ganti Kamera</button>
+        <button id="uploadBtn" title="Upload File">📁 Upload</button>
+        <button id="captureBtn" title="Ambil Foto">📸 Ambil Foto</button>
+        <button id="retakeBtn" style="display:none;" title="Foto Ulang">❌ Ulangi</button>
+        <button id="downloadBtn" style="display:none;" title="Simpan Foto">💾 Simpan Foto</button>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
     <script>
         const video = document.getElementById('cameraStream');
@@ -200,23 +223,33 @@
                 currentStream.getTracks().forEach(track => track.stop());
             }
             try {
+                // Meminta resolusi tertinggi yang didukung perangkat
                 currentStream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         facingMode: useFrontCamera ? "user" : "environment",
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 } 
+                        width: { ideal: 3840 }, // Coba 4K dulu
+                        height: { ideal: 2160 } 
                     } 
                 });
                 video.srcObject = currentStream;
 
-                // Terapkan efek CSS cermin HANYA jika kamera depan yang aktif
                 if (useFrontCamera) {
                     video.style.transform = "scaleX(-1)";
                 } else {
                     video.style.transform = "scaleX(1)";
                 }
             } catch (err) {
-                console.log("Gagal memuat kamera: " + err);
+                console.log("Gagal memuat kamera, mencoba resolusi standar: " + err);
+                // Fallback ke resolusi standar jika 4K gagal
+                try {
+                     currentStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: useFrontCamera ? "user" : "environment" } 
+                    });
+                    video.srcObject = currentStream;
+                    if (useFrontCamera) video.style.transform = "scaleX(-1)";
+                } catch (e) {
+                     alert("Kamera tidak dapat diakses.");
+                }
             }
         }
 
@@ -225,12 +258,13 @@
             startCamera();
         });
 
-        // 2. Format Waktu
+        // 2. Format Waktu yang Lebih Rapi
         function getFormattedTime() {
             const now = new Date();
             const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            const dayName = days[now.getDay()];
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
             
+            const dayName = days[now.getDay()];
             const dd = String(now.getDate()).padStart(2, '0');
             const mm = String(now.getMonth() + 1).padStart(2, '0');
             const yyyy = now.getFullYear();
@@ -247,45 +281,64 @@
             const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
             const offsetMins = String(Math.abs(offset) % 60).padStart(2, '0');
             
+            // Format: Tuesday, 24/02/2026 04:01 PM GMT +07:00
             return `${dayName}, ${dd}/${mm}/${yyyy} ${strHours}:${minutes} ${ampm} GMT ${sign}${offsetHours}:${offsetMins}`;
         }
 
-        // 3. Ambil Lokasi
+        // 3. Ambil Lokasi & Update UI
         function getLocationData() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(async (position) => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
                     
-                    document.getElementById('coordText').innerText = `Lat ${lat.toFixed(6)}° Long ${lon.toFixed(6)}°`;
+                    document.getElementById('coordText').innerText = `Lat ${lat.toFixed(7)}° Long ${lon.toFixed(7)}°`;
                     
+                    // PERBAIKAN: Gunakan Google Hybrid Map agar lebih mirip referensi dan detail
+                    const mapLayerUrl = 'https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
+                    const mapSubdomains = ['mt0','mt1','mt2','mt3'];
+
                     if (!map) {
-                        map = L.map('miniMap', { zoomControl: false, attributionControl: false }).setView([lat, lon], 16);
-                        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                            crossOrigin: true
+                        map = L.map('miniMap', { zoomControl: false, attributionControl: false, zoomSnap: 0 }).setView([lat, lon], 17);
+                        L.tileLayer(mapLayerUrl, {
+                            subdomains: mapSubdomains,
+                            crossOrigin: true // PENTING untuk html2canvas
                         }).addTo(map);
                         marker = L.marker([lat, lon]).addTo(map);
                     } else {
-                        map.setView([lat, lon], 16);
+                        map.setView([lat, lon], 17);
                         marker.setLatLng([lat, lon]);
                     }
 
+                    // Reverse Geocoding
                     try {
-                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                        // Menggunakan Nominatim (OpenStreetMap) - Gratis tapi kadang kurang detail untuk nomor jalan
+                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`);
                         const data = await response.json();
                         
-                        document.getElementById('addressText').innerText = data.display_name;
+                        if (data && data.display_name) {
+                             document.getElementById('addressText').innerText = data.display_name;
                         
-                        const addr = data.address || {};
-                        const kecamatan = addr.county || addr.city || "Kota/Kabupaten";
-                        const provinsi = addr.state || "Provinsi";
-                        const negara = addr.country || "Indonesia";
-                        
-                        document.getElementById('locationHeader').innerText = `${kecamatan}, ${provinsi}, ${negara}`;
+                            const addr = data.address || {};
+                            // Logika untuk mengambil nama tempat yang paling relevan untuk header
+                            const headerTitle = addr.amenity || addr.building || addr.village || addr.suburb || addr.city_district || addr.county || "Lokasi Terkumpul";
+                            const headerRegion = addr.state || "";
+                            
+                            document.getElementById('locationHeader').innerText = `${headerTitle}, ${headerRegion}`;
+                        } else {
+                             throw new Error("Alamat tidak ditemukan");
+                        }
+
                     } catch (err) {
-                        document.getElementById('addressText').innerText = "Gagal memuat alamat detail.";
+                        document.getElementById('addressText').innerText = "Detail alamat tidak dapat dimuat saat ini.";
+                        document.getElementById('locationHeader').innerText = "Koordinat Terdeteksi";
                     }
-                });
+                }, (error) => {
+                    alert("Gagal mendapatkan lokasi: " + error.message);
+                    document.getElementById('addressText').innerText = "Akses lokasi ditolak atau error.";
+                }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+            } else {
+                alert("Browser Anda tidak mendukung Geolocation.");
             }
         }
 
@@ -295,35 +348,40 @@
 
             video.style.display = 'none';
             photoOutput.style.display = 'block';
+            // Gunakan flex agar layout overlay tertata benar
             infoOverlay.style.display = 'flex'; 
             
             captureBtn.style.display = 'none';
             uploadBtn.style.display = 'none';
             switchCamBtn.style.display = 'none';
             
-            retakeBtn.style.display = 'block';
-            downloadBtn.style.display = 'block';
+            retakeBtn.style.display = 'flex';
+            downloadBtn.style.display = 'flex';
 
             getLocationData();
-            setTimeout(() => { if(map) map.invalidateSize(); }, 200);
+            
+            // PERBAIKAN: Paksa peta untuk render ulang agar tidak abu-abu
+            setTimeout(() => { if(map) { map.invalidateSize(); } }, 500);
         }
 
-        // 4. Jepret Foto via Kamera (Disesuaikan untuk Mirror)
+        // 4. Jepret Foto
         captureBtn.addEventListener('click', () => {
+            // Set ukuran kanvas sesuai resolusi asli video kamera
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const context = canvas.getContext('2d');
             
-            // Jika pakai kamera depan, kita harus membalik kanvasnya juga 
-            // agar hasil foto sama persis seperti di layar preview (mirrored).
+            // Mirror jika kamera depan
             if (useFrontCamera) {
                 context.translate(canvas.width, 0);
                 context.scale(-1, 1);
             }
             
+            // Gambar video ke kanvas dengan kualitas tertinggi
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             
-            showPhotoAndInfo(canvas.toDataURL('image/png'));
+            // Konversi ke format WebP kualitas tinggi (lebih baik dari PNG/JPEG untuk web)
+            showPhotoAndInfo(canvas.toDataURL('image/webp', 1.0));
         });
 
         uploadBtn.addEventListener('click', () => {
@@ -349,38 +407,54 @@
             photoOutput.style.display = 'none';
             infoOverlay.style.display = 'none';
             
-            captureBtn.style.display = 'block';
-            uploadBtn.style.display = 'block';
-            switchCamBtn.style.display = 'block';
+            captureBtn.style.display = 'flex';
+            uploadBtn.style.display = 'flex';
+            switchCamBtn.style.display = 'flex';
             
             retakeBtn.style.display = 'none';
             downloadBtn.style.display = 'none';
         });
 
+        // 6. Unduh Foto (PERBAIKAN UTAMA)
         downloadBtn.addEventListener('click', () => {
-            const originalText = downloadBtn.innerText;
-            downloadBtn.innerText = "Memproses...";
+            const originalText = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = "⏳ Memproses...";
             downloadBtn.disabled = true;
 
             const targetElement = document.getElementById('cameraContainer');
 
-            html2canvas(targetElement, {
-                useCORS: true,       
-                allowTaint: false,
-                scale: 2             
-            }).then(renderedCanvas => {
-                const link = document.createElement('a');
-                link.download = `Geotag_${new Date().getTime()}.jpg`;
-                link.href = renderedCanvas.toDataURL('image/jpeg', 0.9);
-                link.click();
+            // PERBAIKAN: Beri jeda sedikit agar memastikan semua elemen (terutama peta) sudah siap dirender
+            setTimeout(() => {
+                html2canvas(targetElement, {
+                    useCORS: true,       // Wajib untuk peta
+                    allowTaint: true,
+                    scale: 2,            // Resolusi output 2x lipat agar tajam (HD)
+                    backgroundColor: null, // PENTING: Agar latar belakang transparan, tidak hitam
+                    logging: false,
+                    scrollX: 0,
+                    scrollY: 0,
+                    windowWidth: document.documentElement.offsetWidth,
+                    windowHeight: document.documentElement.offsetHeight
+                }).then(renderedCanvas => {
+                    // Buat nama file yang unik
+                    const date = new Date();
+                    const timestamp = `${date.getFullYear()}${String(date.getMonth()+1).padStart(2,'0')}${String(date.getDate()).padStart(2,'0')}_${String(date.getHours()).padStart(2,'0')}${String(date.getMinutes()).padStart(2,'0')}${String(date.getSeconds()).padStart(2,'0')}`;
+                    const filename = `GeoCamera_${timestamp}.jpg`;
 
-                downloadBtn.innerText = originalText;
-                downloadBtn.disabled = false;
-            }).catch(err => {
-                alert("Gagal memproses gambar: " + err);
-                downloadBtn.innerText = originalText;
-                downloadBtn.disabled = false;
-            });
+                    const link = document.createElement('a');
+                    link.download = filename;
+                    // Simpan sebagai JPEG kualitas tinggi (0.95)
+                    link.href = renderedCanvas.toDataURL('image/jpeg', 0.95);
+                    link.click();
+
+                    downloadBtn.innerHTML = originalText;
+                    downloadBtn.disabled = false;
+                }).catch(err => {
+                    alert("Gagal memproses gambar. Coba lagi.\nError: " + err.message);
+                    downloadBtn.innerHTML = originalText;
+                    downloadBtn.disabled = false;
+                });
+            }, 1000); // Jeda 1 detik sebelum capture
         });
 
         startCamera();
