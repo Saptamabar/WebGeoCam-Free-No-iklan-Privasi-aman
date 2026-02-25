@@ -1,0 +1,252 @@
+body {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #1a1a1a;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: white;
+    box-sizing: border-box;
+    min-height: 100vh;
+}
+
+.camera-container {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+    background: transparent;
+    line-height: 0;
+}
+
+video, img#photoOutput {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+#photoOutput {
+    display: none;
+}
+
+/* --- OVERLAY LOKASI --- */
+.overlay {
+    position: absolute;
+    bottom: 120px; 
+    left: 20px;
+    right: 20px;
+    display: none; /* Flex diaktifkan via JS */
+    flex-direction: row;
+    gap: 15px;
+    align-items: flex-end;
+    z-index: 20;
+    line-height: normal;
+}
+
+#miniMap {
+    width: 110px;
+    height: 110px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+    z-index: 10;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.details-box {
+    flex-grow: 1;
+    background: rgba(0, 0, 0, 0.75);
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.header-text {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: #ffffff;
+    word-wrap: break-word;
+}
+
+.flag-icon {
+    font-size: 20px;
+    margin: 0 0 8px 0;
+}
+
+.address-text {
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 0 0 10px 0;
+    color: #e0e0e0;
+    word-wrap: break-word;
+}
+
+.meta-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.meta-text {
+    font-size: 12px;
+    margin: 0;
+    color: #b0b0b0;
+    font-family: 'Consolas', 'Courier New', monospace;
+}
+
+/* --- KONTROL TOMBOL --- */
+.controls {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 0 20px;
+}
+
+button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background-color: rgba(0, 123, 255, 0.85); 
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+    flex-grow: 1;
+    max-width: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 86, 179, 0.95);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+#switchCamBtn { background-color: rgba(108, 117, 125, 0.85); }
+#switchCamBtn:hover { background-color: rgba(90, 98, 104, 0.95); }
+
+#captureBtn { background-color: rgba(0, 123, 255, 0.85); }
+#captureBtn:hover { background-color: rgba(0, 86, 179, 0.95); }
+
+#uploadBtn { background-color: rgba(226, 230, 234, 0.85); color: #333; }
+#uploadBtn:hover { background-color: rgba(211, 217, 223, 0.95); }
+
+#downloadBtn { background-color: rgba(40, 167, 69, 0.85); }
+#downloadBtn:hover { background-color: rgba(33, 136, 56, 0.95); }
+
+#retakeBtn { background-color: rgba(220, 53, 69, 0.85); }
+#retakeBtn:hover { background-color: rgba(200, 35, 51, 0.95); }
+
+/* --- RESPONSIVE MOBILE TAMPILAN FULLSCREEN (Maks 768px) --- */
+@media (max-width: 768px) {
+    body {
+        padding: 0; 
+        justify-content: center;
+        background-color: #000; 
+    }
+
+    .camera-container {
+        border-radius: 0;
+        width: 100vw;
+        height: 100vh;
+        max-width: 100%;
+        max-height: 100%;
+    }
+
+    video, img#photoOutput {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; 
+    }
+
+    .overlay {
+        bottom: 140px; 
+        left: 10px;
+        right: 10px;
+        gap: 10px;
+    }
+
+    #miniMap { width: 80px; height: 80px; border-radius: 8px; }
+    .details-box { padding: 12px; }
+    .header-text { font-size: 15px; margin-bottom: 6px; }
+    .flag-icon { font-size: 15px; margin-bottom: 6px; }
+    .address-text { font-size: 12px; margin-bottom: 8px; }
+    .meta-text { font-size: 10px; }
+
+    .controls {
+        bottom: 20px; 
+        gap: 10px;
+    }
+
+    button {
+        font-size: 14px;
+        padding: 12px 10px;
+        max-width: calc(50% - 5px);
+        flex-basis: calc(50% - 5px);
+    }
+}
+
+/* --- TATA LETAK HP SEMPIT (Maks 480px) --- */
+@media (max-width: 480px) {
+    .overlay {
+        bottom: 8px;
+        left: 8px;
+        right: 8px;
+        gap: 8px;
+    }
+
+    #miniMap { width: 65px; height: 65px; }
+    .details-box { padding: 10px; }
+    .header-text { font-size: 13px; margin-bottom: 4px; }
+    .flag-icon { font-size: 13px; margin-bottom: 4px; }
+    .address-text { font-size: 11px; margin-bottom: 6px; line-height: 1.3; }
+    .meta-text { font-size: 9px; }
+    button { font-size: 13px; padding: 10px 8px; }
+}
+
+/* --- KUNCI ORIENTASI PORTRAIT (Saat HP Landscape) --- */
+@media screen and (max-width: 900px) and (orientation: landscape) {
+    body {
+        transform: rotate(-90deg);
+        transform-origin: center center;
+        width: 100vh;
+        height: 100vw;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin: -50vw 0 0 -50vh; 
+        overflow: hidden;
+    }
+    
+    .camera-container { width: 100vh; height: 100vw; }
+    .overlay { bottom: 120px; }
+    .controls { bottom: 15px; }
+    
+    ::-webkit-scrollbar { display: none; }
+}
