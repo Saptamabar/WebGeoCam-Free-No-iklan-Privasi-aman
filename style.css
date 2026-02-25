@@ -23,7 +23,8 @@ body {
     line-height: 0;
 }
 
-video, img#photoOutput {
+video,
+img#photoOutput {
     width: 100%;
     height: auto;
     display: block;
@@ -38,10 +39,11 @@ video, img#photoOutput {
 /* --- OVERLAY LOKASI --- */
 .overlay {
     position: absolute;
-    bottom: 120px; 
+    bottom: 120px;
     left: 20px;
     right: 20px;
-    display: none; /* Flex diaktifkan via JS */
+    display: none;
+    /* Flex diaktifkan via JS */
     flex-direction: row;
     gap: 15px;
     align-items: flex-end;
@@ -123,7 +125,7 @@ button {
     padding: 12px 20px;
     border: none;
     border-radius: 8px;
-    background-color: rgba(0, 123, 255, 0.85); 
+    background-color: rgba(0, 123, 255, 0.85);
     color: white;
     font-size: 15px;
     cursor: pointer;
@@ -148,27 +150,53 @@ button:active {
     transform: translateY(0);
 }
 
-#switchCamBtn { background-color: rgba(108, 117, 125, 0.85); }
-#switchCamBtn:hover { background-color: rgba(90, 98, 104, 0.95); }
+#switchCamBtn {
+    background-color: rgba(108, 117, 125, 0.85);
+}
 
-#captureBtn { background-color: rgba(0, 123, 255, 0.85); }
-#captureBtn:hover { background-color: rgba(0, 86, 179, 0.95); }
+#switchCamBtn:hover {
+    background-color: rgba(90, 98, 104, 0.95);
+}
 
-#uploadBtn { background-color: rgba(226, 230, 234, 0.85); color: #333; }
-#uploadBtn:hover { background-color: rgba(211, 217, 223, 0.95); }
+#captureBtn {
+    background-color: rgba(0, 123, 255, 0.85);
+}
 
-#downloadBtn { background-color: rgba(40, 167, 69, 0.85); }
-#downloadBtn:hover { background-color: rgba(33, 136, 56, 0.95); }
+#captureBtn:hover {
+    background-color: rgba(0, 86, 179, 0.95);
+}
 
-#retakeBtn { background-color: rgba(220, 53, 69, 0.85); }
-#retakeBtn:hover { background-color: rgba(200, 35, 51, 0.95); }
+#uploadBtn {
+    background-color: rgba(226, 230, 234, 0.85);
+    color: #333;
+}
+
+#uploadBtn:hover {
+    background-color: rgba(211, 217, 223, 0.95);
+}
+
+#downloadBtn {
+    background-color: rgba(40, 167, 69, 0.85);
+}
+
+#downloadBtn:hover {
+    background-color: rgba(33, 136, 56, 0.95);
+}
+
+#retakeBtn {
+    background-color: rgba(220, 53, 69, 0.85);
+}
+
+#retakeBtn:hover {
+    background-color: rgba(200, 35, 51, 0.95);
+}
 
 /* --- RESPONSIVE MOBILE TAMPILAN FULLSCREEN (Maks 768px) --- */
 @media (max-width: 768px) {
     body {
-        padding: 0; 
+        padding: 0;
         justify-content: center;
-        background-color: #000; 
+        background-color: #000;
     }
 
     .camera-container {
@@ -179,29 +207,58 @@ button:active {
         max-height: 100%;
     }
 
-    video, img#photoOutput {
+    video,
+    img#photoOutput {
         width: 100%;
         height: 100%;
-        object-fit: cover; 
+        object-fit: cover;
     }
 
     .overlay {
-        bottom: 140px; 
+        bottom: 140px;
         left: 10px;
         right: 10px;
         gap: 10px;
     }
 
-    #miniMap { width: 80px; height: 80px; border-radius: 8px; }
-    .details-box { padding: 12px; }
-    .header-text { font-size: 15px; margin-bottom: 6px; }
-    .flag-icon { font-size: 15px; margin-bottom: 6px; }
-    .address-text { font-size: 12px; margin-bottom: 8px; }
-    .meta-text { font-size: 10px; }
+    #miniMap {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+    }
+
+    .details-box {
+        padding: 12px;
+    }
+
+    .header-text {
+        font-size: 15px;
+        margin-bottom: 6px;
+    }
+
+    .flag-icon {
+        font-size: 15px;
+        margin-bottom: 6px;
+    }
+
+    .address-text {
+        font-size: 12px;
+        margin-bottom: 8px;
+    }
+
+    .meta-text {
+        font-size: 10px;
+    }
 
     .controls {
-        bottom: 20px; 
+        position: fixed;
+        /* Agar selalu menempel di layar bawah hp */
+        bottom: 20px;
+        left: 0;
+        right: 0;
         gap: 10px;
+        z-index: 100;
+        /* Pastikan selalu di atas elemen lain */
     }
 
     button {
@@ -221,32 +278,112 @@ button:active {
         gap: 8px;
     }
 
-    #miniMap { width: 65px; height: 65px; }
-    .details-box { padding: 10px; }
-    .header-text { font-size: 13px; margin-bottom: 4px; }
-    .flag-icon { font-size: 13px; margin-bottom: 4px; }
-    .address-text { font-size: 11px; margin-bottom: 6px; line-height: 1.3; }
-    .meta-text { font-size: 9px; }
-    button { font-size: 13px; padding: 10px 8px; }
+    #miniMap {
+        width: 65px;
+        height: 65px;
+    }
+
+    .details-box {
+        padding: 10px;
+    }
+
+    .header-text {
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+
+    .flag-icon {
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+
+    .address-text {
+        font-size: 11px;
+        margin-bottom: 6px;
+        line-height: 1.3;
+    }
+
+    .meta-text {
+        font-size: 9px;
+    }
+
+    button {
+        font-size: 13px;
+        padding: 10px 8px;
+    }
 }
 
-/* --- KUNCI ORIENTASI PORTRAIT (Saat HP Landscape) --- */
-@media screen and (max-width: 900px) and (orientation: landscape) {
+/* --- TATA LETAK LANDSCAPE (Orientasi Miring di HP) --- */
+@media screen and (max-height: 500px) and (orientation: landscape) {
     body {
-        transform: rotate(-90deg);
-        transform-origin: center center;
-        width: 100vh;
-        height: 100vw;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        margin: -50vw 0 0 -50vh; 
-        overflow: hidden;
+        padding: 0;
+        justify-content: center;
+        background-color: #000;
     }
-    
-    .camera-container { width: 100vh; height: 100vw; }
-    .overlay { bottom: 120px; }
-    .controls { bottom: 15px; }
-    
-    ::-webkit-scrollbar { display: none; }
+
+    .camera-container {
+        border-radius: 0;
+        width: 100vw;
+        height: 100vh;
+        max-width: 100%;
+        max-height: 100%;
+    }
+
+    /* Pindahkan panel kontrol (tombol) ke bagian sisi layar (seperti HP native saat disorot landscape) */
+    .controls {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        /* Menu merapat ke tombol shutter asli (sisi kanan) */
+        left: auto;
+        width: 110px;
+        flex-direction: column;
+        /* Tumpuk tombol ke bawah/vertikal */
+        justify-content: center;
+        padding: 10px;
+        gap: 15px;
+        background: rgba(0, 0, 0, 0.4);
+        /* Beri sedikit bayangan latar belakang */
+    }
+
+    button {
+        width: 100%;
+        max-width: none;
+        padding: 12px 5px;
+        /* Sesuaikan ukuran tombol landscape */
+        font-size: 13px;
+        flex-basis: auto;
+        flex-grow: 0;
+    }
+
+    /* Tetapkan overlay info lokasi di bagian bawah landscape */
+    .overlay {
+        bottom: 12px;
+        left: 12px;
+        right: 125px;
+        /* Sisakan ruang agar tidak menabrak tombol kontrol di sebelah kanan */
+        top: auto;
+        width: auto;
+        transform: none;
+        /* Buang rotasi 90deg yang error sebelumnya */
+    }
+
+    .details-box {
+        padding: 8px 12px;
+    }
+
+    .header-text {
+        margin-bottom: 4px;
+        font-size: 14px;
+    }
+
+    .address-text {
+        margin-bottom: 5px;
+        font-size: 11px;
+    }
+
+    ::-webkit-scrollbar {
+        display: none;
+    }
 }
