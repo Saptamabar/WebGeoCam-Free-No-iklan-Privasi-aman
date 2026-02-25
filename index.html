@@ -21,11 +21,10 @@
             min-height: 100vh;
         }
 
-        /* Container menyesuaikan rasio video otomatis (Landscape/Portrait) */
         .camera-container {
             position: relative;
             width: 100%;
-            max-width: 800px; /* Diperlebar sedikit untuk mode landscape */
+            max-width: 800px;
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
@@ -34,15 +33,16 @@
 
         video, img {
             width: 100%;
-            height: auto; /* Memastikan rasio asli tetap terjaga */
+            height: auto;
             display: block;
+            /* Transisi halus saat kamera berganti cermin/normal */
+            transition: transform 0.3s ease; 
         }
 
         #photoOutput {
             display: none;
         }
 
-        /* Tata letak overlay teks */
         .overlay {
             position: absolute;
             bottom: 10px;
@@ -56,7 +56,7 @@
         }
 
         #miniMap {
-            width: 100px; /* Sedikit dikecilkan agar aman di layar HP kecil */
+            width: 100px;
             height: 100px;
             border-radius: 8px;
             flex-shrink: 0;
@@ -73,7 +73,7 @@
             flex-direction: column;
             justify-content: center;
             backdrop-filter: blur(4px);
-            overflow: hidden; /* Mencegah teks keluar batas */
+            overflow: hidden;
         }
 
         .header-text {
@@ -97,7 +97,7 @@
             margin: 0 0 6px 0;
             color: #eaeaea;
             display: -webkit-box;
-            -webkit-line-clamp: 2; /* Maksimal 2 baris agar rapi di landscape/portrait */
+            -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
@@ -128,21 +128,17 @@
             cursor: pointer;
             transition: background 0.3s;
             font-weight: bold;
-            flex-grow: 1; /* Tombol akan memenuhi ruang kosong */
+            flex-grow: 1;
             max-width: 200px;
         }
 
         button:hover { background-color: #0056b3; }
-        
         #switchCamBtn { background-color: #17a2b8; }
         #switchCamBtn:hover { background-color: #117a8b; }
-        
         #uploadBtn { background-color: #6c757d; }
         #uploadBtn:hover { background-color: #5a6268; }
-        
         #downloadBtn { background-color: #28a745; }
         #downloadBtn:hover { background-color: #218838; }
-        
         #retakeBtn { background-color: #dc3545; }
         #retakeBtn:hover { background-color: #c82333; }
     </style>
@@ -196,9 +192,9 @@
         let map; 
         let marker;
         let currentStream; 
-        let useFrontCamera = false; // Status awal pakai kamera belakang
+        let useFrontCamera = false; 
 
-        // 1. Mulai Kamera dengan Pilihan Lensa
+        // 1. Mulai Kamera dengan Logika Mirror
         async function startCamera() {
             if (currentStream) {
                 currentStream.getTracks().forEach(track => track.stop());
@@ -207,18 +203,23 @@
                 currentStream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         facingMode: useFrontCamera ? "user" : "environment",
-                        // Minta resolusi tinggi jika tersedia
                         width: { ideal: 1920 },
                         height: { ideal: 1080 } 
                     } 
                 });
                 video.srcObject = currentStream;
+
+                // Terapkan efek CSS cermin HANYA jika kamera depan yang aktif
+                if (useFrontCamera) {
+                    video.style.transform = "scaleX(-1)";
+                } else {
+                    video.style.transform = "scaleX(1)";
+                }
             } catch (err) {
                 console.log("Gagal memuat kamera: " + err);
             }
         }
 
-        // Fungsi Tukar Kamera
         switchCamBtn.addEventListener('click', () => {
             useFrontCamera = !useFrontCamera;
             startCamera();
@@ -298,7 +299,7 @@
             
             captureBtn.style.display = 'none';
             uploadBtn.style.display = 'none';
-            switchCamBtn.style.display = 'none'; // Sembunyikan tombol ganti kamera
+            switchCamBtn.style.display = 'none';
             
             retakeBtn.style.display = 'block';
             downloadBtn.style.display = 'block';
@@ -307,25 +308,28 @@
             setTimeout(() => { if(map) map.invalidateSize(); }, 200);
         }
 
-        // 4a. Jepret Foto via Kamera
+        // 4. Jepret Foto via Kamera (Disesuaikan untuk Mirror)
         captureBtn.addEventListener('click', () => {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const context = canvas.getContext('2d');
             
-            // Jika kamera depan, biarkan gambar natural (tidak di-mirror seperti cermin) 
-            // agar teks di latar belakang tetap terbaca normal.
+            // Jika pakai kamera depan, kita harus membalik kanvasnya juga 
+            // agar hasil foto sama persis seperti di layar preview (mirrored).
+            if (useFrontCamera) {
+                context.translate(canvas.width, 0);
+                context.scale(-1, 1);
+            }
+            
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             
             showPhotoAndInfo(canvas.toDataURL('image/png'));
         });
 
-        // 4b. Upload Manual via Tombol
         uploadBtn.addEventListener('click', () => {
             fileInput.click();
         });
 
-        // 4c. Proses File yang Diunggah
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -337,7 +341,6 @@
             }
         });
 
-        // 5. Batal / Ulangi
         retakeBtn.addEventListener('click', () => {
             fileInput.value = ""; 
             startCamera(); 
@@ -354,7 +357,6 @@
             downloadBtn.style.display = 'none';
         });
 
-        // 6. Unduh Foto
         downloadBtn.addEventListener('click', () => {
             const originalText = downloadBtn.innerText;
             downloadBtn.innerText = "Memproses...";
