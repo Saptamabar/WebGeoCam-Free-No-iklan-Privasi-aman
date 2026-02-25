@@ -15,14 +15,17 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
+            padding: 15px;
             color: white;
+            box-sizing: border-box;
+            min-height: 100vh;
         }
 
+        /* Container menyesuaikan rasio video otomatis (Landscape/Portrait) */
         .camera-container {
             position: relative;
             width: 100%;
-            max-width: 600px;
+            max-width: 800px; /* Diperlebar sedikit untuk mode landscape */
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
@@ -31,19 +34,20 @@
 
         video, img {
             width: 100%;
+            height: auto; /* Memastikan rasio asli tetap terjaga */
             display: block;
-            object-fit: cover;
         }
 
         #photoOutput {
             display: none;
         }
 
+        /* Tata letak overlay teks */
         .overlay {
             position: absolute;
-            bottom: 15px;
-            left: 15px;
-            right: 15px;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
             display: none;
             flex-direction: row;
             gap: 10px;
@@ -52,8 +56,8 @@
         }
 
         #miniMap {
-            width: 110px;
-            height: 110px;
+            width: 100px; /* Sedikit dikecilkan agar aman di layar HP kecil */
+            height: 100px;
             border-radius: 8px;
             flex-shrink: 0;
             box-shadow: 0 2px 5px rgba(0,0,0,0.5);
@@ -64,34 +68,42 @@
             flex-grow: 1;
             background: rgba(15, 15, 15, 0.75);
             border-radius: 8px;
-            padding: 10px 12px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             backdrop-filter: blur(4px);
+            overflow: hidden; /* Mencegah teks keluar batas */
         }
 
         .header-text {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: bold;
             margin: 0 0 4px 0;
             color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .flag-icon {
-            font-size: 14px;
+            font-size: 12px;
             margin: 0 0 4px 0;
         }
 
         .address-text {
-            font-size: 11px;
+            font-size: 10px;
             line-height: 1.3;
             margin: 0 0 6px 0;
             color: #eaeaea;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* Maksimal 2 baris agar rapi di landscape/portrait */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .meta-text {
-            font-size: 11px;
+            font-size: 10px;
             margin: 2px 0;
             color: #cccccc;
         }
@@ -102,47 +114,37 @@
             gap: 10px;
             flex-wrap: wrap;
             justify-content: center;
+            width: 100%;
+            max-width: 800px;
         }
 
         button {
-            padding: 10px 20px;
+            padding: 10px 15px;
             border: none;
             border-radius: 5px;
             background-color: #007bff;
             color: white;
-            font-size: 15px;
+            font-size: 14px;
             cursor: pointer;
             transition: background 0.3s;
             font-weight: bold;
+            flex-grow: 1; /* Tombol akan memenuhi ruang kosong */
+            max-width: 200px;
         }
 
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        #uploadBtn {
-            background-color: #6c757d; /* Warna abu-abu untuk upload */
-        }
-
-        #uploadBtn:hover {
-            background-color: #5a6268;
-        }
-
-        #downloadBtn {
-            background-color: #28a745;
-        }
-
-        #downloadBtn:hover {
-            background-color: #218838;
-        }
-
-        #retakeBtn {
-            background-color: #dc3545; /* Warna merah untuk batal/ulang */
-        }
-
-        #retakeBtn:hover {
-            background-color: #c82333;
-        }
+        button:hover { background-color: #0056b3; }
+        
+        #switchCamBtn { background-color: #17a2b8; }
+        #switchCamBtn:hover { background-color: #117a8b; }
+        
+        #uploadBtn { background-color: #6c757d; }
+        #uploadBtn:hover { background-color: #5a6268; }
+        
+        #downloadBtn { background-color: #28a745; }
+        #downloadBtn:hover { background-color: #218838; }
+        
+        #retakeBtn { background-color: #dc3545; }
+        #retakeBtn:hover { background-color: #c82333; }
     </style>
 </head>
 <body>
@@ -166,12 +168,12 @@
     </div>
 
     <canvas id="canvas" style="display:none;"></canvas>
-    
     <input type="file" id="fileInput" accept="image/*" style="display: none;">
 
     <div class="controls">
+        <button id="switchCamBtn">Ganti Kamera</button>
         <button id="captureBtn">Ambil Foto</button>
-        <button id="uploadBtn">Upload Manual</button>
+        <button id="uploadBtn">Upload</button>
         <button id="retakeBtn" style="display:none;">Ulangi</button>
         <button id="downloadBtn" style="display:none;">Unduh Foto</button>
     </div>
@@ -188,29 +190,41 @@
         const uploadBtn = document.getElementById('uploadBtn');
         const retakeBtn = document.getElementById('retakeBtn');
         const downloadBtn = document.getElementById('downloadBtn');
+        const switchCamBtn = document.getElementById('switchCamBtn');
         const fileInput = document.getElementById('fileInput');
         
         let map; 
         let marker;
-        let currentStream; // Menyimpan stream kamera agar bisa dimatikan/dinyalakan
+        let currentStream; 
+        let useFrontCamera = false; // Status awal pakai kamera belakang
 
-        // 1. Mulai Kamera
+        // 1. Mulai Kamera dengan Pilihan Lensa
         async function startCamera() {
-            // Matikan kamera lama jika ada (mencegah kamera nyala terus di background)
             if (currentStream) {
                 currentStream.getTracks().forEach(track => track.stop());
             }
             try {
                 currentStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment" } 
+                    video: { 
+                        facingMode: useFrontCamera ? "user" : "environment",
+                        // Minta resolusi tinggi jika tersedia
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 } 
+                    } 
                 });
                 video.srcObject = currentStream;
             } catch (err) {
-                console.log("Kamera tidak dapat diakses. Silakan gunakan fitur Upload Manual.");
+                console.log("Gagal memuat kamera: " + err);
             }
         }
 
-        // 2. Format Waktu Khusus
+        // Fungsi Tukar Kamera
+        switchCamBtn.addEventListener('click', () => {
+            useFrontCamera = !useFrontCamera;
+            startCamera();
+        });
+
+        // 2. Format Waktu
         function getFormattedTime() {
             const now = new Date();
             const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -235,7 +249,7 @@
             return `${dayName}, ${dd}/${mm}/${yyyy} ${strHours}:${minutes} ${ampm} GMT ${sign}${offsetHours}:${offsetMins}`;
         }
 
-        // 3. Ambil Lokasi & Update UI
+        // 3. Ambil Lokasi
         function getLocationData() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(async (position) => {
@@ -274,9 +288,6 @@
             }
         }
 
-        // --- FUNGSI UTAMA UI & LOGIKA ---
-
-        // Fungsi bantuan untuk mengubah tampilan saat foto didapat (baik via kamera maupun upload)
         function showPhotoAndInfo(imageSrc) {
             photoOutput.src = imageSrc;
             document.getElementById('timeText').innerText = getFormattedTime();
@@ -287,6 +298,8 @@
             
             captureBtn.style.display = 'none';
             uploadBtn.style.display = 'none';
+            switchCamBtn.style.display = 'none'; // Sembunyikan tombol ganti kamera
+            
             retakeBtn.style.display = 'block';
             downloadBtn.style.display = 'block';
 
@@ -299,6 +312,9 @@
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             const context = canvas.getContext('2d');
+            
+            // Jika kamera depan, biarkan gambar natural (tidak di-mirror seperti cermin) 
+            // agar teks di latar belakang tetap terbaca normal.
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             
             showPhotoAndInfo(canvas.toDataURL('image/png'));
@@ -306,7 +322,7 @@
 
         // 4b. Upload Manual via Tombol
         uploadBtn.addEventListener('click', () => {
-            fileInput.click(); // Memicu input file yang disembunyikan
+            fileInput.click();
         });
 
         // 4c. Proses File yang Diunggah
@@ -323,8 +339,8 @@
 
         // 5. Batal / Ulangi
         retakeBtn.addEventListener('click', () => {
-            fileInput.value = ""; // Bersihkan memori input file
-            startCamera(); // Nyalakan kamera lagi
+            fileInput.value = ""; 
+            startCamera(); 
             
             video.style.display = 'block';
             photoOutput.style.display = 'none';
@@ -332,6 +348,8 @@
             
             captureBtn.style.display = 'block';
             uploadBtn.style.display = 'block';
+            switchCamBtn.style.display = 'block';
+            
             retakeBtn.style.display = 'none';
             downloadBtn.style.display = 'none';
         });
@@ -363,7 +381,6 @@
             });
         });
 
-        // Nyalakan kamera saat pertama dimuat
         startCamera();
     </script>
 </body>
